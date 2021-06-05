@@ -1,6 +1,6 @@
 // FIXME: For now, SignUp will only register emailAddress and password
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
 
 // formik = form
 import { Formik } from "formik";
@@ -12,6 +12,7 @@ import * as yup from "yup";
 import { Octicons, Ionicons } from "@expo/vector-icons";
 
 // Components
+import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
 import { MonoText } from "../components/StyledText";
 import { Div, Text, Input, Button } from "react-native-magnus";
 
@@ -47,165 +48,220 @@ const SignUp = ({ navigation }: navigationProp) => {
   // let onFocus: any
 
   return (
-    <Formik
-      initialValues={{
-        firstName: "",
-        lastName: "",
-        emailAddress: "",
-        password: "",
-      }}
-      validateOnMount={true}
-      onSubmit={(values) => {
-        const enteredEmail = values.emailAddress;
-        const enteredPassword = values.password;
+    <KeyboardAvoidingWrapper>
+      <Div px={20} py={200}>
+        <Formik
+          initialValues={{
+            firstName: "",
+            lastName: "",
+            emailAddress: "",
+            password: "",
+          }}
+          validateOnMount={true}
+          onSubmit={(values) => {
+            const enteredEmail = values.emailAddress;
+            const enteredPassword = values.password;
 
-        fetch(SIGN_UP_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            email: enteredEmail,
-            password: enteredPassword,
-            returnSecureToken: true,
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-          .then((response) => {
-            // setIsLoading to false regardless of the result after sending the request
-            // FIXME: Spinner/loading here
+            fetch(SIGN_UP_URL, {
+              method: "POST",
+              body: JSON.stringify({
+                email: enteredEmail,
+                password: enteredPassword,
+                returnSecureToken: true,
+              }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+              .then((response) => {
+                // setIsLoading to false regardless of the result after sending the request
+                // FIXME: Spinner/loading here
 
-            if (response.ok) {
-              return response.json();
-            } else {
-              return response.json().then((data) => {
-                // show an error modal
-                let errorMessage = "Registration failed!";
+                if (response.ok) {
+                  return response.json();
+                } else {
+                  return response.json().then((data) => {
+                    // show an error modal
+                    let errorMessage = "Registration failed!";
 
-                if (data && data.error && data.error.message) {
-                  errorMessage = data.error.message;
+                    if (data && data.error && data.error.message) {
+                      errorMessage = data.error.message;
+                    }
+
+                    throw new Error(errorMessage);
+                  });
                 }
-
-                throw new Error(errorMessage);
+              })
+              .then(() => {
+                alert("Registration Successful");
+                // Upon successful signup, automatically navigate to login screen after 3s
+                setTimeout(() => {
+                  navigation.navigate("Login");
+                }, 3000);
+              })
+              .catch((error) => {
+                alert(error.message);
               });
-            }
-          })
-          .then(() => {
-            alert("Registration Successful");
-            navigation.navigate("Login"); // Upon successful signup, automatically navigate to login
-          })
-          .catch((error) => {
-            alert(error.message);
-          });
-      }}
-      validationSchema={signUpValidationSchema}
-    >
-      {({
-        handleChange,
-        handleBlur,
-        handleSubmit,
-        values,
-        touched,
-        isValid,
-        errors,
-      }) => (
-        // FIXME:
-        <Div flex={1} alignItems="center" justifyContent="center">
-          <MonoText>Sign-up</MonoText>
-          {/* FIXME: Add label(by default, it is not visible) and transition is from inside input field */}
-          {/* to on top of input field */}
-          {/* TODO: Add Icons */}
-          <Div mt={30} w="80%">
-            <SignUpTextInput
-              mb={10}
-              icon="person"
-              placeholder="First Name"
-              placeholderTextColor="black"
-              onChangeText={handleChange("firstName")}
-              onBlur={handleBlur("firstName")}
-              value={values.firstName}
-              // FIXME: onSubmitEditing={() => onFocus.focus()}
-            />
+          }}
+          validationSchema={signUpValidationSchema}
+        >
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            values,
+            touched,
+            isValid,
+            errors,
+          }) => (
+            // FIXME:
+            <Div flex={1} alignItems="center" justifyContent="center">
+              <MonoText style={{ fontSize: 20 }}>Sign-up</MonoText>
+              {/* FIXME: Add label(by default, it is not visible) and transition is from inside input field */}
+              {/* to on top of input field */}
+              {/* TODO: Add Icons */}
+              <Div mt={30} w="80%">
+                <SignUpTextInput
+                  mb={10}
+                  icon="person"
+                  placeholder="First Name"
+                  placeholderTextColor="black"
+                  onChangeText={handleChange("firstName")}
+                  onBlur={handleBlur("firstName")}
+                  value={values.firstName}
+                  // FIXME: onSubmitEditing={() => onFocus.focus()}
+                />
 
-            {errors.firstName && touched.firstName && (
-              <Text mb={10} ml={30} fontSize="xl" fontWeight="bold" color="red">
-                {errors.firstName}
-              </Text>
-            )}
+                {errors.firstName && touched.firstName && (
+                  <MonoText
+                    style={{
+                      marginBottom: 5,
+                      marginLeft: 30,
+                      color: "red",
+                    }}
+                  >
+                    {errors.firstName}
+                  </MonoText>
+                )}
 
-            <SignUpTextInput
-              mb={10}
-              icon="person"
-              placeholder="Last Name"
-              placeholderTextColor="black"
-              onChangeText={handleChange("lastName")}
-              onBlur={handleBlur("lastName")}
-              value={values.lastName}
-              // FIXME: onSubmitEditing={() => onFocus.focus()}
-            />
+                <SignUpTextInput
+                  mb={10}
+                  icon="person"
+                  placeholder="Last Name"
+                  placeholderTextColor="black"
+                  onChangeText={handleChange("lastName")}
+                  onBlur={handleBlur("lastName")}
+                  value={values.lastName}
+                  // FIXME: onSubmitEditing={() => onFocus.focus()}
+                />
 
-            {errors.lastName && touched.lastName && (
-              <Text mb={10} ml={30} fontSize="xl" fontWeight="bold" color="red">
-                {errors.lastName}
-              </Text>
-            )}
+                {errors.lastName && touched.lastName && (
+                  <MonoText
+                    style={{
+                      marginBottom: 5,
+                      marginLeft: 30,
+                      color: "red",
+                    }}
+                  >
+                    {errors.lastName}
+                  </MonoText>
+                )}
 
-            <SignUpTextInput
-              mb={10}
-              icon="mail"
-              placeholder="Email Address"
-              placeholderTextColor="black"
-              onChangeText={handleChange("emailAddress")}
-              onBlur={handleBlur("emailAddress")}
-              values={values.emailAddress}
-              keyboardType="email-address"
-              // FIXME: onSubmitEditing={() => onFocus.focus()}
-            />
+                <SignUpTextInput
+                  mb={10}
+                  icon="mail"
+                  placeholder="Email Address"
+                  placeholderTextColor="black"
+                  onChangeText={handleChange("emailAddress")}
+                  onBlur={handleBlur("emailAddress")}
+                  value={values.emailAddress}
+                  // keyboardType="email-address"
+                  // FIXME: onSubmitEditing={() => onFocus.focus()}
+                />
 
-            {errors.emailAddress && touched.emailAddress && (
-              <Text mb={10} ml={30} fontSize="xl" fontWeight="bold" color="red">
-                {errors.emailAddress}
-              </Text>
-            )}
+                {errors.emailAddress && touched.emailAddress && (
+                  <MonoText
+                    style={{
+                      marginBottom: 5,
+                      marginLeft: 30,
+                      color: "red",
+                    }}
+                  >
+                    {errors.emailAddress}
+                  </MonoText>
+                )}
 
-            <SignUpTextInput
-              mb={10}
-              icon="lock"
-              placeholder="Password"
-              placeholderTextColor="black"
-              onChangeText={handleChange("password")}
-              onBlur={handleBlur("password")}
-              value={values.password}
-              secureTextEntry={showPassword}
-              isPassword={true}
-              showPassword={showPassword}
-              setShowPassword={setShowPassword}
-              // FIXME: onSubmitEditing={() => onFocus.focus()}
-            />
+                <SignUpTextInput
+                  mb={10}
+                  icon="lock"
+                  placeholder="Password"
+                  placeholderTextColor="black"
+                  onChangeText={handleChange("password")}
+                  onBlur={handleBlur("password")}
+                  value={values.password}
+                  secureTextEntry={showPassword}
+                  isPassword={true}
+                  showPassword={showPassword}
+                  setShowPassword={setShowPassword}
+                  // FIXME: onSubmitEditing={() => onFocus.focus()}
+                />
 
-            {errors.password && touched.password && (
-              <Text mb={10} ml={30} fontSize="xl" fontWeight="bold" color="red">
-                {errors.password}
-              </Text>
-            )}
-            <Button w="100%" onPress={() => handleSubmit()} disabled={!isValid}>
-              Submit
-            </Button>
+                {errors.password && touched.password && (
+                  <MonoText
+                    style={{
+                      marginBottom: 5,
+                      marginLeft: 30,
+                      color: "red",
+                    }}
+                  >
+                    {errors.password}
+                  </MonoText>
+                )}
+                <Button
+                  w="100%"
+                  mt={20}
+                  onPress={() => handleSubmit()}
+                  disabled={!isValid}
+                >
+                  <MonoText style={{ fontSize: 18, color: "white" }}>
+                    Submit
+                  </MonoText>
+                </Button>
 
-            <Text mt={50}>
-              Already have an account?{" "}
-              <Text
-                color="salmon"
-                fontWeight="bold"
-                onPress={() => navigation.navigate("Login")}
-              >
-                Login ** TO GO BACK TO LOGIN SCREEN, CLICK THIS FOR NOW**
-              </Text>
-            </Text>
-          </Div>
-        </Div>
-      )}
-    </Formik>
+                <Div mt={30}>
+                  <MonoText style={{ marginTop: 20 }}>
+                    Already have an account?{" "}
+                    <Text
+                      color="salmon"
+                      fontWeight="bold"
+                      onPress={() => navigation.navigate("Login")}
+                    >
+                      Login.
+                    </Text>
+                  </MonoText>
+                </Div>
+              </Div>
+            </Div>
+          )}
+        </Formik>
+      </Div>
+    </KeyboardAvoidingWrapper>
   );
+};
+
+// FIXME: Don't use any
+type Props = {
+  mb: number;
+  value: string;
+  icon: any; // FIXME:
+  placeholder: string;
+  placeholderTextColor: string;
+  onChangeText: any; // FIXME: () => void;
+  onBlur: any; // FIXME: () => void;
+  secureTextEntry?: boolean;
+  isPassword?: boolean;
+  showPassword?: boolean;
+  setShowPassword?: any;
 };
 
 const SignUpTextInput = ({
@@ -214,17 +270,17 @@ const SignUpTextInput = ({
   showPassword,
   setShowPassword,
   ...props
-}: any) => {
+}: Props) => {
   return (
     <Div>
-      <Text style={styles.leftIcon}>
+      <Text style={{ position: "absolute", top: 15, left: 15, zIndex: 1 }}>
         <Octicons name={icon} size={30} color="black" />
       </Text>
 
       <Input pl={55} {...props} />
       {isPassword && (
         <TouchableOpacity
-          style={styles.rightIcon}
+          style={{ position: "absolute", top: 10, right: 15, zIndex: 1 }}
           onPress={() => setShowPassword(!showPassword)}
         >
           <Ionicons
@@ -237,21 +293,5 @@ const SignUpTextInput = ({
     </Div>
   );
 };
-
-const styles = StyleSheet.create({
-  leftIcon: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    zIndex: 1,
-  },
-
-  rightIcon: {
-    position: "absolute",
-    top: 10,
-    right: 15,
-    zIndex: 1,
-  },
-});
 
 export default SignUp;

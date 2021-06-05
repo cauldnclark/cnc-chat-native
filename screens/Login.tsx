@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { StyleSheet, TouchableOpacity } from "react-native";
+import { TouchableOpacity } from "react-native";
 // fomik = form
 import { Formik } from "formik";
 
@@ -10,6 +10,7 @@ import * as yup from "yup";
 import { Octicons, Ionicons } from "@expo/vector-icons";
 
 // Components
+import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
 import { MonoText } from "../components/StyledText";
 import { Div, Text, Input, Button } from "react-native-magnus";
 
@@ -35,12 +36,14 @@ const Login = ({ navigation }: navigationProp) => {
   const [showPassword, setShowPassword] = useState<boolean>(true);
 
   return (
-    <Div flex={1} alignItems="center" justifyContent="center">
+    <KeyboardAvoidingWrapper>
       {/* TODO: LOGO HERE */}
-      <Div w="80%" h="70%" justifyContent="space-evenly">
-        <Div h={80} justifyContent="space-between">
-          <MonoText>Hang out anytime, anywhere.</MonoText>
-          <MonoText>
+      <Div px={20} py={200}>
+        <Div h={150} justifyContent="space-between">
+          <MonoText style={{ fontSize: 40, color: "blue" }}>
+            Hang out anytime, anywhere.
+          </MonoText>
+          <MonoText style={{ fontSize: 15 }}>
             Chat Native makes it easy and fun to stay close to your favorite
             people.
           </MonoText>
@@ -71,7 +74,7 @@ const Login = ({ navigation }: navigationProp) => {
                   return response.json();
                 } else {
                   return response.json().then((data) => {
-                    // show an error modal
+                    // show an error modal or this
                     let errorMessage = "Authenticated failed!";
 
                     if (data && data.error && data.error.message) {
@@ -84,7 +87,11 @@ const Login = ({ navigation }: navigationProp) => {
               })
               .then(() => {
                 alert("Login successful");
-                navigation.navigate("MainScreen"); // Login successful, navigate to MainScreen
+                // Login successful, navigate to MainScreen
+                // Adding setTimeout since alert should pop-up first, before navigating to MainScreen
+                setTimeout(() => {
+                  navigation.navigate("Root");
+                }, 1000);
               })
               .catch((error) => {
                 alert(error.message);
@@ -101,7 +108,7 @@ const Login = ({ navigation }: navigationProp) => {
             isValid,
             errors,
           }) => (
-            <Div>
+            <Div mt={15}>
               <LoginTextInput
                 mb={10}
                 icon="mail"
@@ -110,20 +117,19 @@ const Login = ({ navigation }: navigationProp) => {
                 onChangeText={handleChange("emailAddress")}
                 onBlur={handleBlur("emailAddress")}
                 value={values.emailAddress}
-                keyboardType="email-address"
                 // FIXME: onSubmitEditing={() => onFocus.focus()}
               />
 
               {errors.emailAddress && touched.emailAddress && (
-                <Text
-                  mb={10}
-                  ml={30}
-                  fontSize="xl"
-                  fontWeight="bold"
-                  color="red"
+                <MonoText
+                  style={{
+                    marginBottom: 5,
+                    marginLeft: 30,
+                    color: "red",
+                  }}
                 >
                   {errors.emailAddress}
-                </Text>
+                </MonoText>
               )}
 
               <LoginTextInput
@@ -142,15 +148,15 @@ const Login = ({ navigation }: navigationProp) => {
               />
 
               {errors.password && touched.password && (
-                <Text
-                  ml={30}
-                  mb={20}
-                  fontSize="xl"
-                  fontWeight="bold"
-                  color="red"
+                <MonoText
+                  style={{
+                    marginBottom: 5,
+                    marginLeft: 30,
+                    color: "red",
+                  }}
                 >
                   {errors.password}
-                </Text>
+                </MonoText>
               )}
 
               <Div alignSelf="flex-end">
@@ -164,13 +170,15 @@ const Login = ({ navigation }: navigationProp) => {
                 onPress={() => handleSubmit()}
                 disabled={!isValid}
               >
-                <MonoText>Log In</MonoText>
+                <MonoText style={{ fontSize: 18, color: "white" }}>
+                  Log In
+                </MonoText>
               </Button>
             </Div>
           )}
         </Formik>
 
-        <Div>
+        <Div mt={50}>
           <MonoText>
             Don't have an account yet?{" "}
             <Text
@@ -184,16 +192,24 @@ const Login = ({ navigation }: navigationProp) => {
           </MonoText>
         </Div>
       </Div>
-    </Div>
+    </KeyboardAvoidingWrapper>
   );
 };
 
-// type Props = {
-//   icon: string;
-//   isPassword: boolean;
-//   hidePassword: boolean;
-//   setHidePassword: boolean;
-// };
+// FIXME: Don't use any
+type Props = {
+  mb: number;
+  value: string;
+  icon: any; // FIXME:
+  placeholder: string;
+  placeholderTextColor: string;
+  onChangeText: any; // FIXME: () => void;
+  onBlur: any; // FIXME: () => void;
+  secureTextEntry?: boolean;
+  isPassword?: boolean;
+  showPassword?: boolean;
+  setShowPassword?: any;
+};
 
 const LoginTextInput = ({
   icon,
@@ -201,17 +217,17 @@ const LoginTextInput = ({
   showPassword,
   setShowPassword,
   ...props
-}: any) => {
+}: Props) => {
   return (
     <Div>
-      <Text style={styles.leftIcon}>
+      <Text style={{ position: "absolute", top: 15, left: 15, zIndex: 1 }}>
         <Octicons name={icon} size={30} color="black" />
       </Text>
 
       <Input pl={55} {...props} />
       {isPassword && (
         <TouchableOpacity
-          style={styles.rightIcon}
+          style={{ position: "absolute", top: 15, right: 15, zIndex: 1 }}
           onPress={() => setShowPassword(!showPassword)}
         >
           <Ionicons
@@ -224,21 +240,5 @@ const LoginTextInput = ({
     </Div>
   );
 };
-
-const styles = StyleSheet.create({
-  leftIcon: {
-    position: "absolute",
-    top: 15,
-    left: 15,
-    zIndex: 1,
-  },
-
-  rightIcon: {
-    position: "absolute",
-    top: 15,
-    right: 15,
-    zIndex: 1,
-  },
-});
 
 export default Login;
