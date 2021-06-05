@@ -4,21 +4,20 @@ import { Formik } from "formik";
 // Validator
 import { loginValidationSchema } from "../helper/yupvalidator";
 // Components
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, ToastAndroid } from "react-native";
 import { MonoText } from "../components/StyledText";
 import { Div, Text, Button } from "react-native-magnus";
 import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
 import CustomTextInput from "../components/CustomTextInput";
-// Custom hook
-import useHttp from "../hooks/useHttp";
-// API
-import { loginApi } from "../lib/api";
 // Types
-import { navigationProp } from "../types";
+import { loginNavigationProp } from "../types";
+// API
+const endpoint = "https://identitytoolkit.googleapis.com/v1/accounts:";
+const api_key = "AIzaSyDuMzWJCOWzgHPLr2YJIVsuUUONb7GdeC0";
+const SIGN_IN_URL = endpoint + "signInWithPassword?key=" + api_key;
 
 // FIXME: onSubmitEditing={() => onFocus.focus()} on every CustomTextInput
-const Login = ({ navigation }: navigationProp) => {
-  let { sendRequest, error } = useHttp(loginApi, true);
+const Login = ({ navigation }: loginNavigationProp) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(true);
 
@@ -26,14 +25,6 @@ const Login = ({ navigation }: navigationProp) => {
     return (
       <Div flex={1} alignItems="center" justifyContent="center">
         <ActivityIndicator size="large" color="#2ED573" />
-      </Div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Div flex={1} alignItems="center" justifyContent="center">
-        <MonoText>{error}</MonoText>
       </Div>
     );
   }
@@ -55,12 +46,47 @@ const Login = ({ navigation }: navigationProp) => {
           initialValues={{ emailAddress: "", password: "" }}
           validateOnMount={true}
           onSubmit={(values) => {
+            const enteredEmail = values.emailAddress;
+            const enteredPassword = values.password;
+
             setIsLoading(true);
-            sendRequest(values);
-            setTimeout(() => {
-              navigation.navigate("Root");
-              setIsLoading(false);
-            }, 1000);
+
+            fetch(SIGN_IN_URL, {
+              method: "POST",
+              body: JSON.stringify({
+                email: enteredEmail,
+                password: enteredPassword,
+                returnSecureToken: true,
+              }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+              .then((response) => {
+                setIsLoading(false);
+
+                if (response.ok) {
+                  return response.json();
+                } else {
+                  return response.json().then((data) => {
+                    let errorMessage = "Authentication failed!";
+
+                    if (data && data.error && data.error.message) {
+                      errorMessage = data.error.message;
+                    }
+
+                    throw new Error(errorMessage);
+                  });
+                }
+              })
+              .then((data) => {
+                // successful request
+                ToastAndroid.show("Login Successful!", 5000);
+                navigation.navigate("Root");
+              })
+              .catch((error) => {
+                alert(error.message);
+              });
           }}
           validationSchema={loginValidationSchema}
         >

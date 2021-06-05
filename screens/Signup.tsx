@@ -4,22 +4,21 @@ import { Formik } from "formik";
 // Validator
 import { signUpValidationSchema } from "../helper/yupvalidator";
 // Components
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, ToastAndroid } from "react-native";
 import { MonoText } from "../components/StyledText";
 import { Div, Text, Button } from "react-native-magnus";
 import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
 import CustomTextInput from "../components/CustomTextInput";
-// Custom hook
-import useHttp from "../hooks/useHttp";
-// API
-import { signUpApi } from "../lib/api";
 // Types
-import { navigationProp } from "../types";
+import { signupNavigationProp } from "../types";
+// API
+const endpoint = "https://identitytoolkit.googleapis.com/v1/accounts:";
+const api_key = "AIzaSyDuMzWJCOWzgHPLr2YJIVsuUUONb7GdeC0";
+const SIGN_UP_URL = endpoint + "signUp?key=" + api_key;
 
 // FIXME: For now, SignUp will only register emailAddress and password
 // FIXME: onSubmitEditing={() => onFocus.focus()} on every CustomTextInput
-const SignUp = ({ navigation }: navigationProp) => {
-  let { sendRequest, error } = useHttp(signUpApi, true);
+const SignUp = ({ navigation }: signupNavigationProp) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(true);
   // let onFocus: any
@@ -28,14 +27,6 @@ const SignUp = ({ navigation }: navigationProp) => {
     return (
       <Div flex={1} alignItems="center" justifyContent="center">
         <ActivityIndicator size="large" color="#2ED573" />
-      </Div>
-    );
-  }
-
-  if (error) {
-    return (
-      <Div flex={1} alignItems="center" justifyContent="center">
-        <MonoText>{error}</MonoText>
       </Div>
     );
   }
@@ -52,12 +43,47 @@ const SignUp = ({ navigation }: navigationProp) => {
           }}
           validateOnMount={true}
           onSubmit={(values) => {
+            const enteredEmail = values.emailAddress;
+            const enteredPassword = values.password;
+
             setIsLoading(true);
-            sendRequest(values);
-            setTimeout(() => {
-              navigation.navigate("Login");
-              setIsLoading(false);
-            }, 1000);
+
+            fetch(SIGN_UP_URL, {
+              method: "POST",
+              body: JSON.stringify({
+                email: enteredEmail,
+                password: enteredPassword,
+                returnSecureToken: true,
+              }),
+              headers: {
+                "Content-Type": "application/json",
+              },
+            })
+              .then((response) => {
+                setIsLoading(false);
+
+                if (response.ok) {
+                  return response.json();
+                } else {
+                  return response.json().then((data) => {
+                    let errorMessage = "Authentication failed!";
+
+                    if (data && data.error && data.error.message) {
+                      errorMessage = data.error.message;
+                    }
+
+                    throw new Error(errorMessage);
+                  });
+                }
+              })
+              .then((data) => {
+                // successful request
+                ToastAndroid.show("Sign-up Successful!", 5000);
+                navigation.navigate("Login");
+              })
+              .catch((error) => {
+                alert(error.message);
+              });
           }}
           validationSchema={signUpValidationSchema}
         >
