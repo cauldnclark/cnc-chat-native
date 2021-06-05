@@ -1,51 +1,44 @@
-// FIXME: For now, SignUp will only register emailAddress and password
 import React, { useState } from "react";
-import { TouchableOpacity } from "react-native";
-
-// formik = form
+// Formik = form
 import { Formik } from "formik";
-
-// yup = validator
-import * as yup from "yup";
-
-// icons
-import { Octicons, Ionicons } from "@expo/vector-icons";
-
+// Validator
+import { signUpValidationSchema } from "../helper/yupvalidator";
 // Components
-import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
+import { ActivityIndicator } from "react-native";
 import { MonoText } from "../components/StyledText";
-import { Div, Text, Input, Button } from "react-native-magnus";
-
+import { Div, Text, Button } from "react-native-magnus";
+import KeyboardAvoidingWrapper from "../components/KeyboardAvoidingWrapper";
+import CustomTextInput from "../components/CustomTextInput";
+// Custom hook
+import useHttp from "../hooks/useHttp";
 // API
-const endpoint = "https://identitytoolkit.googleapis.com/v1/accounts:";
-const api_key = "AIzaSyDuMzWJCOWzgHPLr2YJIVsuUUONb7GdeC0";
-const SIGN_UP_URL = endpoint + "signUp?key=" + api_key;
+import { signUpApi } from "../lib/api";
+// Types
+import { navigationProp } from "../types";
 
-// Schema validator
-const signUpValidationSchema = yup.object().shape({
-  firstName: yup.string().required("First name is required"),
-  lastName: yup.string().required("Last name is required"),
-  emailAddress: yup
-    .string()
-    .email("Please enter a valid email address")
-    .required("Email address is required"),
-  password: yup
-    .string()
-    .min(8, ({ min }) => `Password must be at least ${min} characters`)
-    .required("Password is required")
-    .matches(
-      /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
-      "Must contain at least 1 Uppercase, a Number and a Special Character"
-    ),
-});
-
-type navigationProp = {
-  navigation: any;
-};
-
+// FIXME: For now, SignUp will only register emailAddress and password
+// FIXME: onSubmitEditing={() => onFocus.focus()} on every CustomTextInput
 const SignUp = ({ navigation }: navigationProp) => {
+  let { sendRequest, error } = useHttp(signUpApi, true);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showPassword, setShowPassword] = useState<boolean>(true);
   // let onFocus: any
+
+  if (isLoading) {
+    return (
+      <Div flex={1} alignItems="center" justifyContent="center">
+        <ActivityIndicator size="large" color="#2ED573" />
+      </Div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Div flex={1} alignItems="center" justifyContent="center">
+        <MonoText>{error}</MonoText>
+      </Div>
+    );
+  }
 
   return (
     <KeyboardAvoidingWrapper>
@@ -59,49 +52,12 @@ const SignUp = ({ navigation }: navigationProp) => {
           }}
           validateOnMount={true}
           onSubmit={(values) => {
-            const enteredEmail = values.emailAddress;
-            const enteredPassword = values.password;
-
-            fetch(SIGN_UP_URL, {
-              method: "POST",
-              body: JSON.stringify({
-                email: enteredEmail,
-                password: enteredPassword,
-                returnSecureToken: true,
-              }),
-              headers: {
-                "Content-Type": "application/json",
-              },
-            })
-              .then((response) => {
-                // setIsLoading to false regardless of the result after sending the request
-                // FIXME: Spinner/loading here
-
-                if (response.ok) {
-                  return response.json();
-                } else {
-                  return response.json().then((data) => {
-                    // show an error modal
-                    let errorMessage = "Registration failed!";
-
-                    if (data && data.error && data.error.message) {
-                      errorMessage = data.error.message;
-                    }
-
-                    throw new Error(errorMessage);
-                  });
-                }
-              })
-              .then(() => {
-                alert("Registration Successful");
-                // Upon successful signup, automatically navigate to login screen after 3s
-                setTimeout(() => {
-                  navigation.navigate("Login");
-                }, 3000);
-              })
-              .catch((error) => {
-                alert(error.message);
-              });
+            setIsLoading(true);
+            sendRequest(values);
+            setTimeout(() => {
+              navigation.navigate("Login");
+              setIsLoading(false);
+            }, 1000);
           }}
           validationSchema={signUpValidationSchema}
         >
@@ -114,14 +70,10 @@ const SignUp = ({ navigation }: navigationProp) => {
             isValid,
             errors,
           }) => (
-            // FIXME:
             <Div flex={1} alignItems="center" justifyContent="center">
               <MonoText style={{ fontSize: 20 }}>Sign-up</MonoText>
-              {/* FIXME: Add label(by default, it is not visible) and transition is from inside input field */}
-              {/* to on top of input field */}
-              {/* TODO: Add Icons */}
               <Div mt={30} w="80%">
-                <SignUpTextInput
+                <CustomTextInput
                   mb={10}
                   icon="person"
                   placeholder="First Name"
@@ -129,7 +81,6 @@ const SignUp = ({ navigation }: navigationProp) => {
                   onChangeText={handleChange("firstName")}
                   onBlur={handleBlur("firstName")}
                   value={values.firstName}
-                  // FIXME: onSubmitEditing={() => onFocus.focus()}
                 />
 
                 {errors.firstName && touched.firstName && (
@@ -144,7 +95,7 @@ const SignUp = ({ navigation }: navigationProp) => {
                   </MonoText>
                 )}
 
-                <SignUpTextInput
+                <CustomTextInput
                   mb={10}
                   icon="person"
                   placeholder="Last Name"
@@ -152,7 +103,6 @@ const SignUp = ({ navigation }: navigationProp) => {
                   onChangeText={handleChange("lastName")}
                   onBlur={handleBlur("lastName")}
                   value={values.lastName}
-                  // FIXME: onSubmitEditing={() => onFocus.focus()}
                 />
 
                 {errors.lastName && touched.lastName && (
@@ -167,7 +117,7 @@ const SignUp = ({ navigation }: navigationProp) => {
                   </MonoText>
                 )}
 
-                <SignUpTextInput
+                <CustomTextInput
                   mb={10}
                   icon="mail"
                   placeholder="Email Address"
@@ -175,8 +125,6 @@ const SignUp = ({ navigation }: navigationProp) => {
                   onChangeText={handleChange("emailAddress")}
                   onBlur={handleBlur("emailAddress")}
                   value={values.emailAddress}
-                  // keyboardType="email-address"
-                  // FIXME: onSubmitEditing={() => onFocus.focus()}
                 />
 
                 {errors.emailAddress && touched.emailAddress && (
@@ -191,7 +139,7 @@ const SignUp = ({ navigation }: navigationProp) => {
                   </MonoText>
                 )}
 
-                <SignUpTextInput
+                <CustomTextInput
                   mb={10}
                   icon="lock"
                   placeholder="Password"
@@ -203,7 +151,6 @@ const SignUp = ({ navigation }: navigationProp) => {
                   isPassword={true}
                   showPassword={showPassword}
                   setShowPassword={setShowPassword}
-                  // FIXME: onSubmitEditing={() => onFocus.focus()}
                 />
 
                 {errors.password && touched.password && (
@@ -246,51 +193,6 @@ const SignUp = ({ navigation }: navigationProp) => {
         </Formik>
       </Div>
     </KeyboardAvoidingWrapper>
-  );
-};
-
-// FIXME: Don't use any
-type Props = {
-  mb: number;
-  value: string;
-  icon: any; // FIXME:
-  placeholder: string;
-  placeholderTextColor: string;
-  onChangeText: any; // FIXME: () => void;
-  onBlur: any; // FIXME: () => void;
-  secureTextEntry?: boolean;
-  isPassword?: boolean;
-  showPassword?: boolean;
-  setShowPassword?: any;
-};
-
-const SignUpTextInput = ({
-  icon,
-  isPassword,
-  showPassword,
-  setShowPassword,
-  ...props
-}: Props) => {
-  return (
-    <Div>
-      <Text style={{ position: "absolute", top: 15, left: 15, zIndex: 1 }}>
-        <Octicons name={icon} size={30} color="black" />
-      </Text>
-
-      <Input pl={55} {...props} />
-      {isPassword && (
-        <TouchableOpacity
-          style={{ position: "absolute", top: 10, right: 15, zIndex: 1 }}
-          onPress={() => setShowPassword(!showPassword)}
-        >
-          <Ionicons
-            name={showPassword ? "md-eye-off" : "md-eye"}
-            color="black"
-            size={30}
-          />
-        </TouchableOpacity>
-      )}
-    </Div>
   );
 };
 
