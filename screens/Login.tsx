@@ -85,6 +85,7 @@ const Login = ({ navigation }: loginNavigationProp) => {
                 navigation.navigate("Root");
               })
               .catch((error) => {
+                setIsLoading(false);
                 alert(error.message);
               });
           }}

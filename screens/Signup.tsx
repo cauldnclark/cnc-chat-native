@@ -82,6 +82,7 @@ const SignUp = ({ navigation }: signupNavigationProp) => {
                 navigation.navigate("Login");
               })
               .catch((error) => {
+                setIsLoading(false);
                 alert(error.message);
               });
           }}
