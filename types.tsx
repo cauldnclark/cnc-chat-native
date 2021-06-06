@@ -3,8 +3,8 @@
  * https://reactnavigation.org/docs/typescript/
  */
 
-import { Dispatch, SetStateAction } from "react";
 import { StackNavigationProp } from "@react-navigation/stack";
+import { NativeSyntheticEvent, TextInputFocusEventData } from "react-native";
 
 /* Login and Sign-up */
 type LoginNavigationProp = StackNavigationProp<RootStackParamList, "Login">;
@@ -20,15 +20,17 @@ export type signupNavigationProp = {
 export type Props = {
   mb: number;
   value: string;
-  icon: string; // FIXME:
+  icon: any; //FIXME: any for now... string; should work since ---> icon="mail/lock" ---> getting an alert from lint
+  // See here why https://github.com/expo/vector-icons/issues/137
+  // Still doesn't work even if we're "@expo/vector-icons": "^12.0.0",
   placeholder: string;
   placeholderTextColor: string;
-  onChangeText: (e: string) => void; // FIXME:
-  onBlur: (e: string) => void; // FIXME:
+  onChangeText: (v: string) => void;
+  onBlur: (v: NativeSyntheticEvent<TextInputFocusEventData>) => void;
   secureTextEntry?: boolean;
   isPassword?: boolean;
   showPassword?: boolean;
-  setShowPassword?: Dispatch<SetStateAction<boolean>>; // FIXME:
+  setShowPassword?: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 /* End of Login and Sign-up */

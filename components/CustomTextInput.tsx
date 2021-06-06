@@ -1,12 +1,9 @@
 import React from "react";
 import { TouchableOpacity } from "react-native";
-
 // Components
 import { Div, Text, Input } from "react-native-magnus";
-
 // Icons
 import { Octicons, Ionicons } from "@expo/vector-icons";
-
 // Types
 import { Props } from "../types";
 
@@ -27,7 +24,7 @@ const CustomTextInput = ({
       {isPassword && (
         <TouchableOpacity
           style={{ position: "absolute", top: 15, right: 15, zIndex: 1 }}
-          onPress={() => setShowPassword(!showPassword)}
+          onPress={() => setShowPassword && setShowPassword(!showPassword)}
         >
           <Ionicons
             name={showPassword ? "md-eye-off" : "md-eye"}
